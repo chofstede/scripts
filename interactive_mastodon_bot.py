@@ -29,7 +29,7 @@ def save_replied_messages(replied_messages):
         file.write('\n'.join(str(message_id) for message_id in replied_messages))
 
 def get_counter():
-  if os.path.exists(data_file):
+  if os.path.exists('counter.txt'):
     with open('counter.txt', 'r') as file:
       count = file.read()
     return count
