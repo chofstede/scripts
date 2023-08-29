@@ -50,14 +50,14 @@ def get_unreplied_mentions():
     # Fetching mentions
     mentions = mastodon.notifications()
     unreplied_mentions = []
-
+    
     for mention in mentions:
         if mention["type"] == "mention":
             status_id = mention["status"]["id"]
             if str(status_id) not in replied_messages:  # Ensure message ID is a string
                 unreplied_mentions.append(mention)
                 replied_messages.add(str(status_id))  # Ensure message ID is a string
-
+    
     return unreplied_mentions
 
 def reply_to_mentions():
@@ -66,22 +66,22 @@ def reply_to_mentions():
     for mention in unreplied_mentions:
         account_id = mention["account"]["id"]
         content = mention["status"]["content"]
-
+        
         # Extract the message content without any HTML tags
         message = re.sub(r'<.*?>', '', content)
-
+        
         if int(get_counter()) < 11:
           increase_counter()
           # Send user message to OpenAI API to get a response
           prompt = {"role": "user", "content": message}
           completion = openai.ChatCompletion.create(
-            model="gpt-4",
+            model="gpt-3.5-turbo",
             messages=[
               prompt
             ]
           )
-          
-          toot = (completion.choices[0].message.content[490:] + '...') if len(completion.choices[0].message.content) > 490 else completion.choices[0].message.content
+
+          toot = textwrap.shorten(completion.choices[0].message.content, width=490, placeholder='...')
 
           # Post the reply
           mastodon.status_post(f"@{mention['account']['acct']} {toot}", in_reply_to_id=mention["status"]["id"], visibility="public")
