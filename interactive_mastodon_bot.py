@@ -28,6 +28,21 @@ def save_replied_messages(replied_messages):
     with open(data_file, 'w') as file:
         file.write('\n'.join(str(message_id) for message_id in replied_messages))
 
+def get_counter():
+  if os.path.exists(data_file):
+    with open('counter.txt', 'r') as file:
+      count = file.read()
+    return count
+  else:
+    return 0
+
+def increase_counter():
+  count = int(get_counter())
+  count = count + 1
+
+  with open('counter.txt', 'w') as file:
+    file.write(str(count))
+
 # Set to keep track of replied messages
 replied_messages = load_replied_messages()
 
@@ -55,17 +70,22 @@ def reply_to_mentions():
         # Extract the message content without any HTML tags
         message = re.sub(r'<.*?>', '', content)
 
-        # Send user message to OpenAI API to get a response
-        prompt = {"role": "user", "content": message}
-        completion = openai.ChatCompletion.create(
-          model="gpt-4",
-          messages=[
-            prompt
-          ]
-        )
+        if int(get_counter()) < 11:
+          increase_counter()
+          # Send user message to OpenAI API to get a response
+          prompt = {"role": "user", "content": message}
+          completion = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[
+              prompt
+            ]
+          )
 
-        # Post the reply
-        mastodon.status_post(f"@{mention['account']['acct']} {completion.choices[0].message.content}", in_reply_to_id=mention["status"]["id"], visibility="direct")
+          # Post the reply
+          mastodon.status_post(f"@{mention['account']['acct']} {completion.choices[0].message.content}", in_reply_to_id=mention["status"]["id"], visibility="direct")
+
+        else:
+          mastodon.status_post(f"@{mention['account']['acct']} Das Ratelimit für diese Stunde wurde bereits erreicht. In der nächsten Stunde geht es weiter!", in_reply_to_id=mention["status"]["id"], visibility="direct")
 
     # Save the replied message IDs
     save_replied_messages(replied_messages)
