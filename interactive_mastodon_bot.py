@@ -80,9 +80,11 @@ def reply_to_mentions():
               prompt
             ]
           )
+          
+          toot = (completion.choices[0].message.content[490:] + '...') if len(completion.choices[0].message.content) > 490 else completion.choices[0].message.content
 
           # Post the reply
-          mastodon.status_post(f"@{mention['account']['acct']} {completion.choices[0].message.content}", in_reply_to_id=mention["status"]["id"], visibility="direct")
+          mastodon.status_post(f"@{mention['account']['acct']} {toot}", in_reply_to_id=mention["status"]["id"], visibility="public")
 
         else:
           mastodon.status_post(f"@{mention['account']['acct']} Das Ratelimit für diese Stunde wurde bereits erreicht. In der nächsten Stunde geht es weiter!", in_reply_to_id=mention["status"]["id"], visibility="direct")
